@@ -13,9 +13,15 @@ def get_info():
     if not video_url:
         return jsonify({'error': 'URL is required'}), 400
 
+    # YouTube bot verification bypass options
     ydl_opts = {
         'format': 'best',
         'noplaylist': True,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'web']
+            }
+        }
     }
 
     try:
@@ -30,12 +36,19 @@ def get_info():
             # Formats / direct download links gathering
             formats_data = []
             for f in info.get('formats', []):
-                if f.get('url') and f.get('ext') == 'mp4' and f.get('height'):
+                if f.get('url') and f.get('height'):
                     formats_data.append({
                         'resolution': f'{f.get("height")}p',
                         'url': f.get('url'),
-                        'filesize': f'{round(f.get("filesize", 0) / (1024*1024), 1)} MB' if f.get('filesize') else 'Unknown'
+                        'filesize': f'{round(f.get("filesize", 0) / (1024*1024), 1)} MB' if f.get('filesize') else 'Free'
                     })
+            
+            if not formats_data:
+                formats_data.append({
+                    'resolution': 'HD Video',
+                    'url': info.get('url'),
+                    'filesize': 'Direct Stream'
+                })
 
             return jsonify({
                 'title': title,
